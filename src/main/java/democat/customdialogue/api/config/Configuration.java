@@ -6,7 +6,6 @@ import net.minecraft.init.Items;
 import net.minecraft.inventory.EntityEquipmentSlot;
 
 import java.util.List;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -26,7 +25,7 @@ public class Configuration {
 	 */
 	public static final Configuration DEFAULT = 
 	    new Configuration(
-	        new General(false, false),
+	        new General(false, false, false),
 	        new Dialogue()
 	            .addEntry(
 	                new EntryMob("minecraft:villager", 5)
@@ -75,15 +74,18 @@ public class Configuration {
 	public static class General {
 		public boolean gamestagesCompat;
 		public boolean setbonusCompat;
+		public boolean debug;
 		
 		public General() {
 			this.gamestagesCompat = false;
 			this.setbonusCompat = false;
+			this.debug = false;
 		}
 		
-		private General(boolean gc, boolean sbc) {
+		private General(boolean gc, boolean sbc, boolean dbg) {
 			this.gamestagesCompat = gc;
 			this.setbonusCompat = sbc;
+			this.debug = dbg;
 		}
 	}
 
@@ -282,20 +284,23 @@ public class Configuration {
 	}
 
 	public static class EntryDialogue {
-		/** Internal usage */
-		public transient Map<Map.Entry<Class<? extends ICondition>, String>, ICondition> conditions;
-		/** List for use only gson */
-		@SerializedName("conditions") private List<ICondition> _conditions;
+		public List<ICondition> conditions;
 		public int weight;
 		public String text;
 
 		public EntryDialogue(int weight, String text) {
-			this.conditions = new HashMap<>();
-			this._conditions = new ArrayList<>();
+			this.conditions = new ArrayList<>();
 			this.weight = weight;
 			this.text = text;
 
 			this.addRandomCondition();
+		}
+		
+		/**
+		 * Helper method to get a map of class to condition
+		 */
+		private Map<Class<? extends ICondition>, ICondition> getTypeMap() {
+			return conditions.stream().collect(Collectors.toMap(ICondition::getClass, c -> c));
 		}
 		
 		/**
@@ -314,13 +319,10 @@ public class Configuration {
 		 * @return this instance for chaining
 		 */
 		public EntryDialogue addCondition(ICondition condition) {
-			// Skip if another random condition is added
-			// or if a duplicate condition is found
-			if ((condition instanceof ConditionRandom && conditions.containsKey(new SimpleEntry<>(condition.type, null)))
-				|| conditions.containsKey(new SimpleEntry<>(condition.getClass(), condition.resloc)))
+			// Skip if a duplicate condition is found
+			if (conditions.contains(condition))
 				return this;
-			conditions.put(new SimpleEntry<>(condition.getClass(), condition.resloc), condition);
-			_conditions.add(condition);
+			conditions.add(condition);
 			return this;
 		}
 		
@@ -333,18 +335,6 @@ public class Configuration {
 			entries.forEach(this::addCondition);
 			return this;
 		}
-		
-		/**
-		 * Fetches the list of (public) conditions. 
-		 * Also sets internal conditions list to align with public condition list.
-		 * @return the list of gson conditions
-		 */
-		public List<ICondition> get_conditions() {
-			try (Stream<ICondition> stream = _conditions.stream()) {
-				conditions = stream.collect(Collectors.toMap((condition) -> new SimpleEntry<>(condition.type, condition.resloc), (condition) -> condition));
-			}
-			return _conditions;
-		}
 
 		/**
 		 * Removes a condition from the dialogue if it exists
@@ -352,27 +342,8 @@ public class Configuration {
 		 * @return this instance for chaining
 		 */
 		public EntryDialogue removeCondition(ICondition condition) {
-			if (conditions.containsKey(new SimpleEntry<>(condition.type, condition.resloc))) {
-				conditions.remove(new SimpleEntry<>(condition.type, condition.resloc));
-			}
-			if (_conditions.contains(condition)) {
-				_conditions.remove(condition);
-			}
-			return this;
-		}
-
-		/**
-		 * Removes a condition from the dialogue based on condition type and parameter if it exists
-		 * @param entry a Map.Entry of the condition type and condition parameter
-		 * @return this instance for chaining
-		 */
-		public EntryDialogue removeConditionExplicit(Map.Entry<Class<? extends ICondition>, String> entry) {
-			if (conditions.containsKey(entry)) {
-				if (_conditions.contains(conditions.get(entry))) {
-					_conditions.remove(conditions.get(entry));
-				}
-				conditions.remove(entry);
-			}
+			if (conditions.contains(condition))
+				conditions.remove(condition);
 			return this;
 		}
 
@@ -381,9 +352,9 @@ public class Configuration {
 		 * @param type the type to remove
 		 * @return this instance for chaining
 		 */
-		public EntryDialogue removeConditionByType(Class<? extends ICondition> type) {
-			try (Stream<Map.Entry<Class<? extends ICondition>, String>> stream = conditions.keySet().stream()) {
-				this.removeConditionsExplicit(stream.filter((entry) -> entry.getKey() == type).collect(Collectors.toList()));
+		public EntryDialogue removeConditionsByType(Class<? extends ICondition> type) {
+			try (Stream<Map.Entry<Class<? extends ICondition>, ICondition>> stream = getTypeMap().entrySet().stream()) {
+				this.removeConditions(stream.filter((entry) -> entry.getKey() == type).map(entry -> entry.getValue()).collect(Collectors.toList()));
 			}
 			return this;
 		}
@@ -393,18 +364,8 @@ public class Configuration {
 		 * @param conditions the list of conditions to remove
 		 * @return this instance for chaining
 		 */
-		public EntryDialogue removeConditions(Collection<ICondition> conditions) {
-			conditions.forEach(this::removeCondition);
-			return this;
-		}
-
-		/**
-		 * Removes a list of conditions from the dialogue based on type and parameter if they exist
-		 * @param conditions the list of Map.Entry to remove, with the type and parameter
-		 * @return this instance for chaining
-		 */
-		public EntryDialogue removeConditionsExplicit(Collection<Map.Entry<Class<? extends ICondition>, String>> conditions) {
-			conditions.forEach(this::removeConditionExplicit);
+		public EntryDialogue removeConditions(Collection<ICondition> _conditions) {
+			_conditions.forEach(this::removeCondition);
 			return this;
 		}
 	}

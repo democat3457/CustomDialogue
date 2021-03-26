@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ConditionManager {
+	/** Map of condition names to their classes */
     public static final Map<String, Class<? extends ICondition>> CONDITIONS = new HashMap<>();
 
     /**

@@ -2,8 +2,7 @@ package democat.customdialogue.commands;
 
 import democat.customdialogue.CustomDialogue;
 import democat.customdialogue.api.config.Configuration.*;
-import democat.customdialogue.api.config.Configuration.EntryDialogue.Condition;
-import democat.customdialogue.api.config.Configuration.EntryDialogue.Condition.ConditionTypes;
+import democat.customdialogue.api.config.conditions.ConditionManager;
 import democat.customdialogue.util.*;
 
 import java.io.IOException;
@@ -11,8 +10,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static java.util.AbstractMap.SimpleEntry;
 
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
@@ -24,7 +21,9 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 public class DialogueCommand extends CommandBase {
+	/** List of immediate subcommands */
     private List<String> subCommands = new ArrayList<>();
+    /** Map of config commands to usage params */
     private Map<String, String> configCommands = new HashMap<>();
 
     public DialogueCommand() {
@@ -37,8 +36,8 @@ public class DialogueCommand extends CommandBase {
         this.configCommands.put("removeMob", "");
         this.configCommands.put("addDialogue", "");
         this.configCommands.put("removeDialogue", "");
-        this.configCommands.put("addCondition", "");
-        this.configCommands.put("removeCondition", "");
+//        this.configCommands.put("addCondition", "");
+//        this.configCommands.put("removeCondition", "");
         this.configCommands.put("removeAllConditionsWithType", "");
     }
 
@@ -150,6 +149,7 @@ public class DialogueCommand extends CommandBase {
                             /**
                              * /cdialogue config addCondition
                              */
+                            /*
                             else if (action.equalsIgnoreCase("addCondition")) {
                                 if (args.length == 3 || args.length == 4 || args.length == 5
                                         || args[3] == null || args[4] == null || args[5] == null
@@ -164,9 +164,11 @@ public class DialogueCommand extends CommandBase {
                                 } else
                                     sender.sendMessage(Utilities.tcColor("Invalid mob id!\n/cdialogue config addCondition <mob> <text> <conditionType> <conditionParam>", TextFormatting.RED));
                             }
+                            */
                             /**
                              * /cdialogue config removeCondition
                              */
+                            /*
                             else if (action.equalsIgnoreCase("removeCondition")) {
                                 if (args.length == 3 || args.length == 4 || args.length == 5
                                         || args[3] == null || args[4] == null || args[5] == null
@@ -174,7 +176,7 @@ public class DialogueCommand extends CommandBase {
                                     sender.sendMessage(Utilities.tcColor("Missing required argument - /cdialogue config removeCondition <mob> <text> <conditionType> <conditionParam>", TextFormatting.RED));
                                 else if (CustomDialogue.configHandler.config.dialogue.mobList.containsKey(new ResourceLocation(param).toString())) {
                                     if (CustomDialogue.configHandler.config.dialogue.getEntry(param).containsText(args[3])) {
-                                        if (CustomDialogue.configHandler.config.dialogue.getEntry(param).getDialogue(args[3]).conditions.containsKey(new SimpleEntry<>(ConditionTypes.valueOf(args[4].trim().toUpperCase()), args[5]))) {
+                                        if (CustomDialogue.configHandler.config.dialogue.getEntry(param).getDialogue(args[3]).conditions.contains(new SimpleEntry<>(ConditionTypes.valueOf(args[4].trim().toUpperCase()), args[5]))) {
                                             CustomDialogue.configHandler.config.dialogue.getEntry(param).getDialogue(args[3]).removeConditionExplicit(new SimpleEntry<>(ConditionTypes.valueOf(args[4].trim().toUpperCase()), args[5]));
                                             sender.sendMessage(Utilities.tcColor("Removed condition for mob " + new ResourceLocation(param).toString() + " and dialogue with text " + args[3], TextFormatting.GREEN));
                                         } else
@@ -184,6 +186,7 @@ public class DialogueCommand extends CommandBase {
                                 } else
                                     sender.sendMessage(Utilities.tcColor("Invalid mob id!\n/cdialogue config removeCondition <mob> <text> <conditionType> <conditionParam>", TextFormatting.RED));
                             }
+                            */
                             /**
                              * /cdialogue config removeAllConditionsWithType
                              */
@@ -194,8 +197,8 @@ public class DialogueCommand extends CommandBase {
                                     sender.sendMessage(Utilities.tcColor("Missing required argument - /cdialogue config removeAllConditionsWithType <mob> <text> <conditionType>", TextFormatting.RED));
                                 else if (CustomDialogue.configHandler.config.dialogue.mobList.containsKey(new ResourceLocation(param).toString())) {
                                     if (CustomDialogue.configHandler.config.dialogue.getEntry(param).containsText(args[3])) {
-                                        CustomDialogue.configHandler.config.dialogue.getEntry(param).getDialogue(args[3]).removeConditionByType(ConditionTypes.valueOf(args[4].trim().toUpperCase()));
-                                        sender.sendMessage(Utilities.tcColor("Removed conditions with type " + ConditionTypes.valueOf(args[4].trim().toUpperCase()) + " for mob " + new ResourceLocation(param).toString() + " and dialogue with text " + args[3]
+                                        CustomDialogue.configHandler.config.dialogue.getEntry(param).getDialogue(args[3]).removeConditionsByType(ConditionManager.CONDITIONS.getOrDefault(args[4].trim(), null));
+                                        sender.sendMessage(Utilities.tcColor("Removed conditions with type " + ConditionManager.CONDITIONS.getOrDefault(args[4].trim(), null) + " for mob " + new ResourceLocation(param).toString() + " and dialogue with text " + args[3]
                                             + ".\nNOTE: This command will succeed even if it did not remove any conditions. This is due to logical complications.", TextFormatting.GREEN));
                                     } else
                                         sender.sendMessage(Utilities.tcColor("Invalid dialogue text! Maybe you forgot to put it in quotes?\n/cdialogue config removeAllConditionsWithType <mob> <text> <conditionType>", TextFormatting.RED));
@@ -242,9 +245,9 @@ public class DialogueCommand extends CommandBase {
                             sb.append("        Weight: " + dialogue.weight + "\n");
                             if (dialogue.conditions != null) {
                                 sb.append("        Condition List: \n");
-                                dialogue.conditions.forEach((map, condition) -> {
-                                    sb.append("          Condition Type: " + condition.type + "\n");
-                                    sb.append("            Condition Parameter: " + condition.resloc + "\n");
+                                dialogue.conditions.forEach(condition -> {
+                                    sb.append("          Condition Type: " + condition.getClass() + "\n");
+                                    sb.append("            Condition: " + condition.toString() + "\n");
                                 });
                             }
                         });
@@ -287,14 +290,16 @@ public class DialogueCommand extends CommandBase {
 
     @Override
     public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, BlockPos targetPos) {
-        if (args[0].equalsIgnoreCase("config") && (args.length == 1 || args[1].equals("") || args[1] == null)) {
+        if (args == null || args.length == 0 || "".equals(args[0])) {
+        	return this.subCommands;
+        } else if (args.length == 1 && args[0].equalsIgnoreCase("config")) {
             return new ArrayList<>(this.configCommands.keySet());
-        } else if (args[0].equalsIgnoreCase("config")) {
-            return getListOfStringsMatchingLastWord(args, this.configCommands.keySet());
-        } else if (args == null || args.length == 0 || args[0] == "") {
-            return this.subCommands;
-        } else {
+        } else if (args.length == 1) {
             return getListOfStringsMatchingLastWord(args, this.subCommands);
+        } else if (args.length == 2 && args[0].equalsIgnoreCase("config") && !this.configCommands.keySet().contains(args[1])) {
+            return getListOfStringsMatchingLastWord(args, this.configCommands.keySet());
+        } else {
+        	return new ArrayList<>();
         }
     }
 }
