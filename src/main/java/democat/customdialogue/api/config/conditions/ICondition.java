@@ -14,6 +14,11 @@ import net.minecraftforge.event.entity.player.PlayerInteractEvent.EntityInteract
  * The parent class for dialogue conditions.
  */
 public abstract class ICondition {
+	// TODO: Add toString
+	// TODO: Add equals
+	// TODO: Register with ConditionManager
+	// TODO: Add serializer
+	
     /**
      * The name of the condition should be what is defined in the config; case
      * doesn't matter but config will default to as returned in here.
