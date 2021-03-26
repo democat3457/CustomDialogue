@@ -1,6 +1,27 @@
 build/
 bin/
 .vscode/
-.settings/
-.gradle/
-config/
+/config/
+
+# eclipse
+bin
+*.launch
+.settings
+.metadata
+.classpath
+.project
+lib/
+# idea
+out
+*.ipr
+*.iws
+*.iml
+.idea
+
+# gradle
+build
+.gradle
+
+# other
+eclipse
+run
