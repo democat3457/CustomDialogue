@@ -1,7 +1,7 @@
 # CustomDialogue
 A Minecraft mod that adds custom dialogue to entities.
 
-Features:
+## Features
 - Weighted dialogue
 - Conditions for each piece of dialogue
 - Extensive customization
